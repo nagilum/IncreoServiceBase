@@ -589,7 +589,7 @@ namespace Increo.ServiceBase
         {
             if (delay.HasValue)
             {
-                logger?.LogInformation(
+                logger?.LogWarning(
                     $"Waiting {delay.Value.ToHumanReadable(true)} before starting the first run.");
 
                 await Task.Delay(
