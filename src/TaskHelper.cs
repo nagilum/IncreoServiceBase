@@ -1,12 +1,11 @@
 ﻿using Increo.ServiceBase.Attributes;
-using Increo.ServiceBase.Database;
-using Increo.ServiceBase.Database.Models;
 using Increo.ServiceBase.Extenders;
+using Increo.ServiceBase.Models.Database;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 using System.Text.Json;
 
-namespace Increo.ServiceBase.Tools
+namespace Increo.ServiceBase
 {
     internal class TaskHelper
     {
@@ -29,7 +28,7 @@ namespace Increo.ServiceBase.Tools
 
         public TaskHelper(TaskRun run)
         {
-            this.Run = run;
+            Run = run;
         }
 
         #endregion
@@ -60,7 +59,7 @@ namespace Increo.ServiceBase.Tools
                 return null;
             }
 
-            return this.GetData(key);
+            return GetData(key);
         }
 
         /// <summary>
@@ -88,7 +87,7 @@ namespace Increo.ServiceBase.Tools
                 return default;
             }
 
-            return this.GetData<T>(key);
+            return GetData<T>(key);
         }
 
         /// <summary>
@@ -98,8 +97,8 @@ namespace Increo.ServiceBase.Tools
         /// <returns>Data.</returns>
         public object? GetData(string key)
         {
-            return this.DataStorage?.ContainsKey(key) == true
-                ? this.DataStorage[key]
+            return DataStorage?.ContainsKey(key) == true
+                ? DataStorage[key]
                 : null;
         }
 
@@ -111,7 +110,7 @@ namespace Increo.ServiceBase.Tools
         /// <returns>Data.</returns>
         public T? GetData<T>(string key)
         {
-            var data = this.GetData(key);
+            var data = GetData(key);
 
             return data != null
                 ? (T)data
@@ -147,7 +146,7 @@ namespace Increo.ServiceBase.Tools
                 return;
             }
 
-            this.SetData(key, value);
+            SetData(key, value);
         }
 
         /// <summary>
@@ -159,8 +158,8 @@ namespace Increo.ServiceBase.Tools
             string key,
             object value)
         {
-            this.DataStorage ??= new();
-            this.DataStorage[key] = value;
+            DataStorage ??= new();
+            DataStorage[key] = value;
         }
 
         #endregion
@@ -192,7 +191,7 @@ namespace Increo.ServiceBase.Tools
 
             var entry = new TaskRunLog
             {
-                RunId = this.Run.Id,
+                RunId = Run.Id,
                 Created = DateTimeOffset.Now,
                 LogType = logTypeStr,
                 Message = message,
@@ -249,7 +248,7 @@ namespace Increo.ServiceBase.Tools
             System.Collections.IDictionary? data = null,
             CancellationToken? cancellationToken = null)
         {
-            await this.LogAsync(
+            await LogAsync(
                 LogType.Debug,
                 message,
                 stackTrace,
@@ -276,7 +275,7 @@ namespace Increo.ServiceBase.Tools
             System.Collections.IDictionary? data = null,
             CancellationToken? cancellationToken = null)
         {
-            await this.LogAsync(
+            await LogAsync(
                 LogType.Information,
                 message,
                 stackTrace,
@@ -303,7 +302,7 @@ namespace Increo.ServiceBase.Tools
             System.Collections.IDictionary? data = null,
             CancellationToken? cancellationToken = null)
         {
-            await this.LogAsync(
+            await LogAsync(
                 LogType.Warning,
                 message,
                 stackTrace,
@@ -330,7 +329,7 @@ namespace Increo.ServiceBase.Tools
             System.Collections.IDictionary? data = null,
             CancellationToken? cancellationToken = null)
         {
-            await this.LogAsync(
+            await LogAsync(
                 LogType.Error,
                 message,
                 stackTrace,
@@ -349,7 +348,7 @@ namespace Increo.ServiceBase.Tools
             Exception exception,
             CancellationToken? cancellationToken = null)
         {
-            await this.LogErrorAsync(
+            await LogErrorAsync(
                 exception.Message,
                 exception.StackTrace,
                 exception.Source,
@@ -375,7 +374,7 @@ namespace Increo.ServiceBase.Tools
             System.Collections.IDictionary? data = null,
             CancellationToken? cancellationToken = null)
         {
-            await this.LogAsync(
+            await LogAsync(
                 LogType.Critical,
                 message,
                 stackTrace,
@@ -394,7 +393,7 @@ namespace Increo.ServiceBase.Tools
             Exception exception,
             CancellationToken? cancellationToken = null)
         {
-            await this.LogCriticalAsync(
+            await LogCriticalAsync(
                 exception.Message,
                 exception.StackTrace,
                 exception.Source,
@@ -417,23 +416,23 @@ namespace Increo.ServiceBase.Tools
             using var db = new EfContext();
 
             var run = await db.TaskRuns
-                .FirstOrDefaultAsync(n => n.Id == this.Run.Id,
+                .FirstOrDefaultAsync(n => n.Id == Run.Id,
                                      ctoken ?? CancellationToken.None);
 
             if (run == null)
             {
                 throw new Exception(
-                    $"Unable to find run in database with identifier {this.Run.Id}");
+                    $"Unable to find run in database with identifier {Run.Id}");
             }
 
             // Save storage.
-            if (this.DataStorage != null)
+            if (DataStorage != null)
             {
                 using var stream = new MemoryStream();
 
                 await JsonSerializer.SerializeAsync(
                     stream,
-                this.DataStorage,
+                DataStorage,
                     cancellationToken: ctoken ?? CancellationToken.None);
 
                 run.Data = Encoding.UTF8.GetString(
@@ -441,8 +440,8 @@ namespace Increo.ServiceBase.Tools
             }
 
             // Update end-times.
-            run.Finished = this.Run.Finished;
-            run.RunTimeSeconds = this.Run.RunTimeSeconds;
+            run.Finished = Run.Finished;
+            run.RunTimeSeconds = Run.RunTimeSeconds;
 
             // Save.
             await db.SaveChangesAsync(
@@ -459,9 +458,9 @@ namespace Increo.ServiceBase.Tools
         /// <returns>Event id.</returns>
         public EventId GetEventId()
         {
-            this.EventId ??= new EventId((int) this.Run.Id);
+            EventId ??= new EventId((int)Run.Id);
 
-            return this.EventId.Value;
+            return EventId.Value;
         }
 
         /// <summary>
@@ -474,7 +473,7 @@ namespace Increo.ServiceBase.Tools
             long totalItems,
             long processedItems)
         {
-            var current = DateTimeOffset.Now - this.Run.Started;
+            var current = DateTimeOffset.Now - Run.Started;
             var avg = current.TotalMilliseconds / processedItems;
             var rem = avg * (totalItems - processedItems);
 
@@ -508,7 +507,7 @@ namespace Increo.ServiceBase.Tools
                 return;
             }
 
-            this.IncrementCounter(key);
+            IncrementCounter(key);
         }
 
         /// <summary>
@@ -517,11 +516,11 @@ namespace Increo.ServiceBase.Tools
         /// <param name="key">Key.</param>
         public void IncrementCounter(string key)
         {
-            var value = this.GetData<long>(key);
+            var value = GetData<long>(key);
 
             value++;
 
-            this.SetData(key, value);
+            SetData(key, value);
         }
 
         #endregion
@@ -551,7 +550,7 @@ namespace Increo.ServiceBase.Tools
                 return;
             }
 
-            this.DecreaseCounter(key);
+            DecreaseCounter(key);
         }
 
         /// <summary>
@@ -560,11 +559,11 @@ namespace Increo.ServiceBase.Tools
         /// <param name="key">Key.</param>
         public void DecreaseCounter(string key)
         {
-            var value = this.GetData<long>(key);
+            var value = GetData<long>(key);
 
             value--;
 
-            this.SetData(key, value);
+            SetData(key, value);
         }
 
         #endregion
@@ -604,7 +603,7 @@ namespace Increo.ServiceBase.Tools
                     name,
                     ctoken);
 
-                var eventId = new EventId((int) run.Id);
+                var eventId = new EventId((int)run.Id);
                 var helper = new TaskHelper(run);
 
                 logger?.LogInformation(
@@ -653,7 +652,7 @@ namespace Increo.ServiceBase.Tools
                 var finished = DateTimeOffset.Now;
 
                 run.Finished = finished;
-                run.RunTimeSeconds = (int) (finished - run.Started).TotalSeconds;
+                run.RunTimeSeconds = (int)(finished - run.Started).TotalSeconds;
 
                 // Save run.
                 await helper.SaveAsync();

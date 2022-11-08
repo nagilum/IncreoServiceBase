@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Increo.ServiceBase.Database.Models
+namespace Increo.ServiceBase.Models.Database
 {
     [Table("_ISB_TaskRunLogs")]
     internal class TaskRunLog

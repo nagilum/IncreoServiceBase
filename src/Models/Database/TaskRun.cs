@@ -1,10 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json;
-using System.Text;
 
-namespace Increo.ServiceBase.Database.Models
+namespace Increo.ServiceBase.Models.Database
 {
     [Table("_ISB_TaskRuns")]
     internal class TaskRun

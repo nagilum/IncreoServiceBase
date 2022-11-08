@@ -1,7 +1,7 @@
-﻿using Increo.ServiceBase.Database.Models;
+﻿using Increo.ServiceBase.Models.Database;
 using Microsoft.EntityFrameworkCore;
 
-namespace Increo.ServiceBase.Database
+namespace Increo.ServiceBase
 {
     partial class EfContext : DbContext
     {

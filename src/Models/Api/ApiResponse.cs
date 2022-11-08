@@ -2,7 +2,7 @@
 using System.Text;
 using System.Text.Json;
 
-namespace Increo.ServiceBase.Tools.Models
+namespace Increo.ServiceBase.Models.Api
 {
     internal class ApiResponse
     {
@@ -42,8 +42,8 @@ namespace Increo.ServiceBase.Tools.Models
         /// <returns>Success.</returns>
         public bool IsOk()
         {
-            return this.StatusCode == HttpStatusCode.OK ||
-                   this.StatusCode == HttpStatusCode.Created;
+            return StatusCode == HttpStatusCode.OK ||
+                   StatusCode == HttpStatusCode.Created;
         }
 
         /// <summary>
@@ -57,12 +57,12 @@ namespace Increo.ServiceBase.Tools.Models
         {
             try
             {
-                if (this.Json == null)
+                if (Json == null)
                 {
                     return default;
                 }
 
-                var buffer = Encoding.UTF8.GetBytes(this.Json);
+                var buffer = Encoding.UTF8.GetBytes(Json);
                 var stream = new MemoryStream(buffer);
 
                 var obj = await JsonSerializer.DeserializeAsync<T>(

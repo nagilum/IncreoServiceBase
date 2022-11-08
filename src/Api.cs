@@ -1,8 +1,8 @@
-﻿using Increo.ServiceBase.Tools.Models;
+﻿using Increo.ServiceBase.Models.Api;
 using System.Text;
 using System.Text.Json;
 
-namespace Increo.ServiceBase.Tools
+namespace Increo.ServiceBase
 {
     internal static class Api
     {
