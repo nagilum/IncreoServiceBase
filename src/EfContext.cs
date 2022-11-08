@@ -5,65 +5,32 @@ namespace Increo.ServiceBase
 {
     partial class EfContext : DbContext
     {
-        public ConfigEntry.ConfigDatabaseEntry? DatabaseConfig { get; set; }
+        /// <summary>
+        /// MSSQL database config.
+        /// </summary>
+        private MsSqlDatabaseConfig? DatabaseConfig { get; set; }
 
         #region Constructors
-
-        /// <summary>
-        /// Init a new Entity Framework context and load IncreoDb conntection, if found, or first, if possible.
-        /// </summary>
-        /// <exception cref="Exception">Thrown if an SQL connection string cannot be built.</exception>
-        public EfContext()
-        {
-            if (Config.Loaded?.Databases?.Count > 0 &&
-                Config.Loaded.Databases.ContainsKey("IncreoDb"))
-            {
-                this.DatabaseConfig = Config.Loaded.Databases["IncreoDb"];
-                return;
-            }
-
-            var item = Config.Loaded?.Databases?.FirstOrDefault();
-
-            if (item?.Value == null)
-            {
-                return;
-            }
-
-            if (item.Value.Value.ToString() == null)
-            {
-                throw new Exception(
-                    $"Unable to build SQL connection string from appsettings database entry '{item}'.");
-            }
-
-            this.DatabaseConfig = item.Value.Value;
-        }
 
         /// <summary>
         /// Init a new Entity Framework context.
         /// </summary>
         /// <param name="connectionName">Load connection based on name.</param>
-        /// <exception cref="Exception">Thrown if connection wasn't found based on name.</exception>
-        public EfContext(string connectionName)
+        public EfContext(string connectionName = "IncreoDb")
         {
-            if (Config.Loaded?.Databases?.Count > 0 &&
-                Config.Loaded.Databases.ContainsKey(connectionName))
-            {
-                this.DatabaseConfig = Config.Loaded.Databases[connectionName];
-            }
-            else
-            {
-                throw new Exception(
-                    $"Database connection '{connectionName}' not found in appsettings.");
-            }
+            DatabaseConfig = Config.GetSection<MsSqlDatabaseConfig>(
+                "IncreoServiceBase",
+                "DatabaseConnections",
+                connectionName);
         }
 
         /// <summary>
         /// Init a new Entity Framework context.
         /// </summary>
         /// <param name="databaseConfig">Connection config.</param>
-        public EfContext(ConfigEntry.ConfigDatabaseEntry databaseConfig)
+        public EfContext(MsSqlDatabaseConfig databaseConfig)
         {
-            this.DatabaseConfig = databaseConfig;
+            DatabaseConfig = databaseConfig;
         }
 
         #endregion
