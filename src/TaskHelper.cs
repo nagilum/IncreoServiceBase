@@ -525,14 +525,14 @@ namespace Increo.ServiceBase
 
         #endregion
 
-        #region Decrease a counter
+        #region Decrement a counter
 
         /// <summary>
         /// Decrease a set value in storage.
         /// </summary>
         /// <param name="dataKey">Key.</param>
         /// <param name="keyPrefix">Key prefix.</param>
-        public void DecreaseCounter(
+        public void DecrementCounter(
             DataKey dataKey,
             string? keyPrefix = null)
         {
@@ -550,14 +550,14 @@ namespace Increo.ServiceBase
                 return;
             }
 
-            DecreaseCounter(key);
+            DecrementCounter(key);
         }
 
         /// <summary>
         /// Decrease a set value in storage.
         /// </summary>
         /// <param name="key">Key.</param>
-        public void DecreaseCounter(string key)
+        public void DecrementCounter(string key)
         {
             var value = GetData<long>(key);
 
@@ -579,7 +579,7 @@ namespace Increo.ServiceBase
         /// <param name="interval">Interval between runs, if any.</param>
         /// <param name="logger">Logging interface, if any.</param>
         /// <param name="functions">List of functions to run, in order.</param>
-        public static async Task Setup(
+        public static async Task SetupAsync(
             string name,
             CancellationToken? ctoken,
             TimeSpan? delay,
