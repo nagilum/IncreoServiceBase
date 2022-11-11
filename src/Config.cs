@@ -56,7 +56,9 @@
                     }
                     else if (i == keys.Length - 1)
                     {
-                        return section.Get<T>();
+                        return section
+                            .GetSection(keys[i])
+                            .Get<T>();
                     }
                     else
                     {
