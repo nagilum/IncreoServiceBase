@@ -9,10 +9,12 @@ namespace Increo.ServiceBase
 {
     internal class TaskHelper
     {
+        #region Properties
+
         /// <summary>
-        /// Run identificator.
+        /// When the last function was started.
         /// </summary>
-        public TaskRun Run { get; set; }
+        public DateTimeOffset? FunctionStart { get; set; }
 
         /// <summary>
         /// Internal storage while running.
@@ -23,6 +25,13 @@ namespace Increo.ServiceBase
         /// Local storage of the event ID.
         /// </summary>
         private EventId? EventId { get; set; }
+
+        /// <summary>
+        /// Run identificator.
+        /// </summary>
+        public TaskRun Run { get; set; }
+
+        #endregion
 
         #region Constructor
 
@@ -473,11 +482,20 @@ namespace Increo.ServiceBase
             long totalItems,
             long processedItems)
         {
-            var current = DateTimeOffset.Now - Run.Started;
+            var current = DateTimeOffset.Now - (this.FunctionStart ?? Run.Started);
             var avg = current.TotalMilliseconds / processedItems;
             var rem = avg * (totalItems - processedItems);
 
             return TimeSpan.FromMilliseconds(rem);
+        }
+
+        /// <summary>
+        /// Set function start.
+        /// </summary>
+        /// <param name="start">Start.</param>
+        public void SetFunctionStart(DateTimeOffset? start = null)
+        {
+            this.FunctionStart = start ?? DateTimeOffset.Now;
         }
 
         #endregion
@@ -564,113 +582,6 @@ namespace Increo.ServiceBase
             value--;
 
             SetData(key, value);
-        }
-
-        #endregion
-
-        #region Helper functions
-
-        /// <summary>
-        /// Wrapper to run a list of functions with interval and delays.
-        /// </summary>
-        /// <param name="name">Name of the run.</param>
-        /// <param name="ctoken">Cancellation token.</param>
-        /// <param name="delay">Delay before start, if any.</param>
-        /// <param name="interval">Interval between runs, if any.</param>
-        /// <param name="logger">Logging interface, if any.</param>
-        /// <param name="functions">List of functions to run, in order.</param>
-        public static async Task SetupAsync(
-            string name,
-            CancellationToken? ctoken,
-            TimeSpan? delay,
-            TimeSpan? interval,
-            ILogger? logger,
-            params Func<TaskHelper, CancellationToken, Task>[] functions)
-        {
-            if (delay.HasValue)
-            {
-                logger?.LogWarning(
-                    $"Waiting {delay.Value.ToHumanReadable(true)} before starting the first run.");
-
-                await Task.Delay(
-                    delay.Value,
-                    ctoken ?? CancellationToken.None);
-            }
-
-            while (ctoken?.IsCancellationRequested != true)
-            {
-                var run = await TaskRun.CreateNewAsync(
-                    name,
-                    ctoken);
-
-                var eventId = new EventId((int)run.Id);
-                var helper = new TaskHelper(run);
-
-                logger?.LogInformation(
-                    eventId,
-                    "Starting a new run.");
-
-                try
-                {
-                    foreach (var function in functions)
-                    {
-                        logger?.LogInformation(
-                            eventId,
-                            $"Running function \"{function.Method.Name}\".");
-
-                        var start = DateTimeOffset.Now;
-
-                        await function.Invoke(
-                            helper,
-                            ctoken ?? CancellationToken.None);
-
-                        var end = DateTimeOffset.Now;
-                        var duration = end - start;
-
-                        logger?.LogInformation(
-                            eventId,
-                            $"Finished running function \"{function.Method.Name}\" which took {duration.ToHumanReadable(true)}.");
-
-                        await helper.LogInformationAsync(
-                            $"Finished running function \"{function.Method.Name}\" which took {duration.ToHumanReadable(true)}.",
-                            cancellationToken: ctoken);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger?.LogError(
-                        eventId,
-                        ex,
-                        ex.Message);
-
-                    await helper.LogErrorAsync(
-                        ex,
-                        ctoken);
-                }
-
-                // Mark run as finished.
-                var finished = DateTimeOffset.Now;
-
-                run.Finished = finished;
-                run.RunTimeSeconds = (int)(finished - run.Started).TotalSeconds;
-
-                // Save run.
-                await helper.SaveAsync();
-
-                if (interval.HasValue)
-                {
-                    logger?.LogInformation(
-                        eventId,
-                        $"Waiting {interval.Value.ToHumanReadable(true)} before re-running.");
-
-                    await Task.Delay(
-                        interval.Value,
-                        ctoken ?? CancellationToken.None);
-                }
-            }
-
-            logger?.LogInformation(
-                "Cancellation requested. Shutting down.");
         }
 
         #endregion
