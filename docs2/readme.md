@@ -2,7 +2,7 @@
 
 ### Table of Contents
 
-* Getting Started
+* [Getting Started](getting-started.md)
     - [Requirements](getting-started.md#requirements)
     - [How to setup worker with Increo ServiceBase](getting-started.md#how-to-setup-worker-with-increo-servicesase)
     - [What's installed/setup](getting-started.md#whats-installedsetup)
